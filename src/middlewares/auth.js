@@ -15,7 +15,14 @@ export const auth = (authRole = Object.values(roles)) => {
     if (!token) {
       return next(new Error("Not authorized", { cause: 401 }));
     }
-    const decodedToken = jwt.verify(token, process.env.AUTH_TOKEN_KEY);
+    let decodedToken;
+    // extra layer of protection to prevent server crash
+    // TODO::try to remove letter from token, server crashes
+    try {
+      decodedToken = jwt.verify(token, process.env.AUTH_TOKEN_KEY);
+    } catch (error) {
+      return next(new Error("corrupted token", { cause: 400 }));
+    }
     if (!decodedToken.id) {
       return next(new Error("invalid id", { cause: 401 }));
     }

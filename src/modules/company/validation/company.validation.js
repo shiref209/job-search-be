@@ -35,3 +35,9 @@ export const deleteCompanySchema = joi
     id: generalFields.idRequired,
   })
   .required();
+
+export const getCompanyDataSchema = joi
+  .object({
+    id: generalFields.idRequired,
+  })
+  .required();

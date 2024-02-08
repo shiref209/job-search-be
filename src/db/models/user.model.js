@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 
 const userSchema = new Schema({
   firstName: {
@@ -28,6 +28,10 @@ const userSchema = new Schema({
     enum: ["company_hr", "user"],
     default: "user",
     required: [true, "Role is required"],
+  },
+  companyId: {
+    type: Types.ObjectId,
+    ref: "Company",
   },
   //TODO: change type to string
   dob: Date,

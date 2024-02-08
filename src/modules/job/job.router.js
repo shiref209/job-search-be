@@ -7,7 +7,12 @@ import {
   deleteJobSchema,
   updateJobSchema,
 } from "./validation/job.validation.js";
-import { addJob, deleteJob, updateJob } from "./controllers/job.controller.js";
+import {
+  addJob,
+  deleteJob,
+  getAllJobsWithCompany,
+  updateJob,
+} from "./controllers/job.controller.js";
 
 const jobRouter = Router();
 
@@ -32,6 +37,7 @@ jobRouter
     auth(roles.Hr),
     validation(deleteJobSchema),
     deleteJob
-  );
+  )
+  .get("/", validation(tokenSchema, true), auth(), getAllJobsWithCompany);
 
 export default jobRouter;

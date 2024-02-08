@@ -29,6 +29,11 @@ export const signupSchema = joi
     phone: joi.string().min(5).max(15).regex(/^\d+$/),
     recoveryEmail: joi.string().email(),
     role: joi.string().valid("company_hr", "user").required(),
+    companyId: joi.when("role", {
+      is: "company_hr",
+      then: generalFields.idRequired,
+      otherwise: joi.forbidden(),
+    }),
   })
   .required();
 

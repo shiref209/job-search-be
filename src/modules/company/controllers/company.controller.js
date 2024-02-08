@@ -1,4 +1,6 @@
+import mongoose, { Types } from "mongoose";
 import { companyModel } from "../../../db/models/company.model.js";
+import { jobModel } from "../../../db/models/job.model.js";
 import { asyncHandler } from "../../../utils/asyncHandler.js";
 
 // 1-check if name or email exists
@@ -65,4 +67,48 @@ export const deleteCompany = asyncHandler(async (req, res, next) => {
   }
   await companyModel.findByIdAndDelete(req.params.id);
   return res.status(200).json({ msg: "success delete" });
+});
+
+//1-check if company exists
+//2- with aggregate,
+//first stage -->get company data
+//second stage --> then go to users model and get users where _id matches companyId provided from company
+//third stage --> then to job model and get jobs added by users id that works from
+//finally remove users from company data
+export const getCompanyData = asyncHandler(async (req, res, next) => {
+  if (!(await companyModel.findById(req.params.id))) {
+    return next(new Error("company not found", { cause: 404 }));
+  }
+  const company = await companyModel.aggregate([
+    {
+      $match: {
+        _id: new Types.ObjectId(req.params.id),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "_id",
+        foreignField: "companyId",
+        as: "users",
+      },
+    },
+    {
+      $unwind: "$users",
+    },
+    {
+      $lookup: {
+        from: "jobs",
+        localField: "users._id",
+        foreignField: "addedBy",
+        as: "jobs",
+      },
+    },
+    {
+      $project: {
+        users: 0,
+      },
+    },
+  ]);
+  return res.status(200).json({ msg: "success", company });
 });

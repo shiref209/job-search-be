@@ -1,3 +1,4 @@
+import { companyModel } from "../../../db/models/company.model.js";
 import { userModel } from "../../../db/models/user.model.js";
 import { asyncHandler } from "../../../utils/asyncHandler.js";
 import bcrypt from "bcryptjs";
@@ -5,7 +6,9 @@ import jwt from "jsonwebtoken";
 // 1-check if email/phone exists
 // 2-hash password
 // 3-compute username
-// 4-create user
+//4-if role hr, check for company id is supplied and company exists
+//5-add company_id to user collection
+// 6-create user
 export const signup = asyncHandler(async (req, res, next) => {
   if (
     await userModel.findOne({
@@ -18,6 +21,18 @@ export const signup = asyncHandler(async (req, res, next) => {
   if (!hashedPassword) return next(new Error("error", { cause: 500 }));
   req.body.userName = req.body.firstName + " " + req.body.lastName;
   req.body.password = hashedPassword;
+  // if role hr, check for company id is supplied and company exists
+  if (req.body.role == "company_hr") {
+    if (!req.body.companyId) {
+      return next(new Error("company id is required", { cause: 400 }));
+    }
+    if (!(await companyModel.findById(req.body.companyId))) {
+      return next(
+        new Error("company not found, please add company", { cause: 404 })
+      );
+    }
+  }
+
   const user = await userModel.create(req.body);
   return res.status(201).json({ message: "User created successfully", user });
 });
