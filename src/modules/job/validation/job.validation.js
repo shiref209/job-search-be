@@ -35,3 +35,13 @@ export const deleteJobSchema = joi
     id: generalFields.idRequired,
   })
   .required();
+
+export const jobApplySchema = joi
+  .object({
+    id: generalFields.idRequired,
+    userTechSkills: joi.array().items(joi.string()),
+    userSoftSkills: joi.array().items(joi.string()),
+    userResume: generalFields.file,
+    file: generalFields.file,
+  })
+  .required();

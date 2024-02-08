@@ -5,32 +5,8 @@ export class ApiFeatures {
   }
   filter() {
     let filter = { ...this.data };
-    let excludeQueryParams = [
-      "page",
-      "size",
-      "fields",
-      "skip",
-      "sort",
-      "search",
-    ];
-    excludeQueryParams.forEach((element) => {
-      delete filter[element];
-    });
-    let match = {};
-    for (let key in filter) {
-      if (
-        [
-          "workingTime",
-          "jobLocation",
-          "seniorityLevel",
-          "jobTitle",
-          "technicalSkills",
-        ].includes(key)
-      ) {
-        match[key] = filter[key];
-      }
-    }
-
-    return Object.keys(match).length > 0 ? { $match: match } : null;
+    filter = JSON.parse(JSON.stringify(filter));
+    this.mongooseQuery.find(filter);
+    return this;
   }
 }

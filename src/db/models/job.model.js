@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
 const jobSchema = new Schema({
   jobTitle: {
@@ -37,9 +37,14 @@ const jobSchema = new Schema({
     ref: "User",
     required: [true, "Job must be added by a user"],
   },
+  candidates: [
+    {
+      type: Types.ObjectId,
+      ref: "User",
+    },
+  ],
 });
 
-// TODO:: add condition on deployment
 export const jobModel =
   process.env.MODE == "dev"
     ? model("Job", jobSchema)

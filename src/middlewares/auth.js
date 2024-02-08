@@ -17,7 +17,7 @@ export const auth = (authRole = Object.values(roles)) => {
     }
     let decodedToken;
     // extra layer of protection to prevent server crash
-    // TODO::try to remove letter from token, server crashes
+    // TODO::try to remove letter from token, server crashes without try catch
     try {
       decodedToken = jwt.verify(token, process.env.AUTH_TOKEN_KEY);
     } catch (error) {
