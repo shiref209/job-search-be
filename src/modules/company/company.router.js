@@ -15,6 +15,7 @@ import {
   addCompanySchema,
   deleteCompanySchema,
   getCompanyDataSchema,
+  schedulerExcelApiSchema,
   updateCompanySchema,
 } from "./validation/company.validation.js";
 
@@ -60,6 +61,7 @@ companyRouter
     "/formatExcel",
     validation(tokenSchema, true),
     auth(roles.Hr),
+    validation(schedulerExcelApiSchema),
     schedulerExcelApi
   );
 

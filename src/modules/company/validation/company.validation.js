@@ -41,3 +41,9 @@ export const getCompanyDataSchema = joi
     id: generalFields.idRequired,
   })
   .required();
+
+export const schedulerExcelApiSchema = joi
+  .object({
+    date: joi.date().min(new Date()).required(),
+  })
+  .required();
