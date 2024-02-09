@@ -19,11 +19,11 @@ const companySchema = new Schema({
     unique: true,
     required: [true, "Company email is required"],
   },
-  //TODO: range of employees
   noOfEmployees: {
     min: { type: Number, min: 1 },
     max: { type: Number, min: 1 },
   },
+  //hr created company
   HR: {
     type: Schema.Types.ObjectId,
     ref: "User",

@@ -33,7 +33,6 @@ const userSchema = new Schema({
     type: Types.ObjectId,
     ref: "Company",
   },
-  //TODO: change type to string
   dob: Date,
   phone: {
     type: String,

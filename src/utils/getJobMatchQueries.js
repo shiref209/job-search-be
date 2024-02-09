@@ -18,7 +18,6 @@ export const getJobMatchQuery = (req) => {
   });
   //staticaly handle if technicalSkills is array
   if (req.query.technicalSkills) {
-    console.log(Array.isArray(req.query.technicalSkills));
     if (Array.isArray(req.query.technicalSkills)) {
       matchQuery.technicalSkills = { $in: req.query.technicalSkills };
     } else {

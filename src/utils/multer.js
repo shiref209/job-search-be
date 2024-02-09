@@ -11,7 +11,6 @@ const uploadHandler = ({
   uploadType = "file",
 } = {}) => {
   const storage = multer.diskStorage({});
-  console.log(fileValidation);
   const fileFilter = (req, file, cb) => {
     if (!fileValidation.includes(file.mimetype)) {
       cb(new Error("file type not supported"), false);

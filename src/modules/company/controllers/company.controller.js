@@ -1,8 +1,11 @@
 import mongoose, { Types } from "mongoose";
 import { companyModel } from "../../../db/models/company.model.js";
-import { jobModel } from "../../../db/models/job.model.js";
 import { asyncHandler } from "../../../utils/asyncHandler.js";
-
+import { ApiFeatures } from "../../../utils/apiFeatures.js";
+import { userModel } from "../../../db/models/user.model.js";
+import ExcelJS from "exceljs";
+import { scheduleJob } from "node-schedule";
+import { formatExcel } from "../../../utils/excelFormatter.js";
 // 1-check if name or email exists
 // 2-add hr id from token
 // 3-add company
@@ -61,7 +64,6 @@ export const deleteCompany = asyncHandler(async (req, res, next) => {
   if (!company) {
     return next(new Error("company not found", { cause: 404 }));
   }
-  console.log(company.HR, req.user._id);
   if (company.HR.toString() !== req.user._id.toString()) {
     return next(new Error("unauthorized", { cause: 401 }));
   }
@@ -111,4 +113,147 @@ export const getCompanyData = asyncHandler(async (req, res, next) => {
     },
   ]);
   return res.status(200).json({ msg: "success", company });
+});
+
+//get all with feat api to search
+export const searchCompany = asyncHandler(async (req, res, next) => {
+  const apiFeatures = new ApiFeatures(companyModel.find(), req.query).search();
+  const companies = await apiFeatures.mongooseQuery;
+  return res.status(200).json({ msg: "success", companies });
+});
+
+//1-skip company exists and check if user is HR owner
+//2- with aggregate,
+//first stage -->filter users that works in this company as hr
+//second stage --> then go to jobs model and get jobs added by them
+//third stage --> then to applications model and get applicants for each job
+
+export const getCompanyApplications = asyncHandler(async (req, res, next) => {
+  const company = await companyModel.findOne({ HR: req.user._id });
+  if (!company) {
+    return next(new Error("unauthorized", { cause: 401 }));
+  }
+  const applications = await userModel.aggregate([
+    {
+      $match: {
+        companyId: new Types.ObjectId(company._id),
+      },
+    },
+    {
+      $lookup: {
+        from: "jobs",
+        localField: "_id",
+        foreignField: "addedBy",
+        as: "jobs",
+      },
+    },
+    {
+      $unwind: "$jobs",
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "jobs.candidates",
+        foreignField: "_id",
+        as: "jobs.candidatesData",
+      },
+    },
+    {
+      $addFields: {
+        "jobs.candidatesData": {
+          $map: {
+            input: "$jobs.candidatesData",
+            as: "candidate",
+            in: {
+              _id: "$$candidate._id",
+              email: "$$candidate.email",
+              firstname: "$$candidate.firstname",
+              lastname: "$$candidate.lastname",
+              phone: "$$candidate.phone",
+              dob: "$$candidate.dob",
+            },
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        hrId: "$_id",
+        name: "$userName",
+        hrEmail: "$email",
+        jobs: {
+          jobId: "$jobs._id",
+          jobTitle: "$jobs.title",
+          applicants: "$jobs.candidatesData",
+        },
+      },
+    },
+  ]);
+  return res.status(200).json({ msg: "success", applications });
+});
+
+//same logic above but with excel and applications returned are passed to excel formatter
+export const schedulerExcelApi = asyncHandler(async (req, res, next) => {
+  const company = await companyModel.findOne({ HR: req.user._id });
+  const job = scheduleJob(req.body.date, async function () {
+    const applications = await userModel.aggregate([
+      {
+        $match: {
+          companyId: new Types.ObjectId(company._id),
+        },
+      },
+      {
+        $lookup: {
+          from: "jobs",
+          localField: "_id",
+          foreignField: "addedBy",
+          as: "jobs",
+        },
+      },
+      {
+        $unwind: "$jobs",
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "jobs.candidates",
+          foreignField: "_id",
+          as: "jobs.candidatesData",
+        },
+      },
+      {
+        $addFields: {
+          "jobs.candidatesData": {
+            $map: {
+              input: "$jobs.candidatesData",
+              as: "candidate",
+              in: {
+                _id: "$$candidate._id",
+                email: "$$candidate.email",
+                firstname: "$$candidate.firstname",
+                lastname: "$$candidate.lastname",
+                phone: "$$candidate.phone",
+                dob: "$$candidate.dob",
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          hrId: "$_id",
+          name: "$userName",
+          hrEmail: "$email",
+          jobs: {
+            jobId: "$jobs._id",
+            jobTitle: "$jobs.title",
+            applicants: "$jobs.candidatesData",
+          },
+        },
+      },
+    ]);
+    await formatExcel(applications);
+  });
+  job.invoke();
+  return res.status(200).json({ msg: "success" });
 });
