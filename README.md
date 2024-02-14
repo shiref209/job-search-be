@@ -1,4 +1,4 @@
-"# trello-route-api" 
+"# job-search-api" 
 This particular app describes searching for a job that is relevant to their domain or area of interest.
 
 **Features of Job Search App:**
